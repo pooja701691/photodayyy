@@ -1,0 +1,23 @@
+meta {
+  name: Generate Event QR
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/events/{{eventId}}/qr?origin=http://localhost:5173
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("should generate QR code data URL and public URL", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data.qrCodeDataUrl).to.be.a('string');
+    expect(res.getBody().data.publicUrl).to.contain("/public/events/");
+  });
+}

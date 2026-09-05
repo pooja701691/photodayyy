@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Photo-Dey API Collection",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

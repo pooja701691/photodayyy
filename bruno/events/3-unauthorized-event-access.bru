@@ -1,0 +1,20 @@
+meta {
+  name: Unauthorized Event Access
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/events/invalid-or-foreign-id
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("should deny unauthorized/not found event access", function() {
+    expect([403, 404]).to.include(res.getStatus());
+  });
+}

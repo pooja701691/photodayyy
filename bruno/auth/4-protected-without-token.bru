@@ -1,0 +1,16 @@
+meta {
+  name: Protected Request Without Token
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/auth/me
+  auth: none
+}
+
+tests {
+  test("should reject request without token with 401 Unauthorized", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

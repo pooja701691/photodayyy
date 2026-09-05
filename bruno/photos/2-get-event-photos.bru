@@ -1,0 +1,22 @@
+meta {
+  name: Get Event Photos
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/events/{{eventId}}/photos
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("should retrieve photos belonging to event", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data).to.be.an('array');
+  });
+}

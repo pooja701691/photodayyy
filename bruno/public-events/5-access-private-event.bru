@@ -1,0 +1,17 @@
+meta {
+  name: Access Private Event (Denied)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/public/events/{{eventId}}
+  auth: none
+}
+
+tests {
+  test("should deny guest access to private event with 403 Forbidden", function() {
+    expect(res.getStatus()).to.equal(403);
+    expect(res.getBody().message).to.contain("private");
+  });
+}

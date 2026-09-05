@@ -1,0 +1,32 @@
+meta {
+  name: Login Photographer
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "alex.lens@example.com",
+    "password": "Password123"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.getBody().data && res.getBody().data.token) {
+    bru.setEnvVar("token", res.getBody().data.token);
+  }
+}
+
+tests {
+  test("should login successfully and return JWT token", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data.token).to.be.a('string');
+  });
+}

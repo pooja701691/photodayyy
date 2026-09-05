@@ -1,0 +1,13 @@
+{
+  "name": "photo-dey-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Photo-Dey - Event photo management & guest galleries",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "start:backend": "npm start --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "test:backend": "npm test --prefix backend"
+  }
+}

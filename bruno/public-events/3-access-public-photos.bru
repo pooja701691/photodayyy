@@ -1,0 +1,18 @@
+meta {
+  name: Access Public Photos (Guest)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/public/events/{{eventId}}/photos
+  auth: none
+}
+
+tests {
+  test("should allow guest to view photos of public event", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data).to.be.an('array');
+  });
+}

@@ -1,0 +1,22 @@
+meta {
+  name: Access Public Event (Guest)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/public/events/{{eventId}}
+  auth: none
+}
+
+tests {
+  test("should allow guest access to public event without authentication", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data.id).to.equal(bru.getEnvVar("eventId"));
+    expect(res.getBody().data.photographer).to.be.an('object');
+    // Ensure sensitive fields are never exposed
+    expect(res.getBody().data.password).to.be.undefined;
+    expect(res.getBody().data.token).to.be.undefined;
+  });
+}

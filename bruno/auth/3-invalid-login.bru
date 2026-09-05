@@ -1,0 +1,24 @@
+meta {
+  name: Invalid Login
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "alex.lens@example.com",
+    "password": "WrongPassword999"
+  }
+}
+
+tests {
+  test("should reject invalid login with 401 Unauthorized", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

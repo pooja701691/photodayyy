@@ -1,0 +1,28 @@
+meta {
+  name: Disable Public Event
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/events/{{eventId}}/public
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "isPublic": false
+  }
+}
+
+tests {
+  test("should disable public access on event", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.isPublic).to.be.false;
+  });
+}

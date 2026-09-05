@@ -1,0 +1,33 @@
+meta {
+  name: Upload Photo to Event
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/events/{{eventId}}/photos
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:multipart-form {
+  photos: @file(tests/fixtures/sample.png)
+}
+
+script:post-response {
+  if (res.getStatus() === 201 && res.getBody().data && res.getBody().data.length > 0) {
+    bru.setEnvVar("photoId", res.getBody().data[0].id);
+  }
+}
+
+tests {
+  test("should upload photo successfully", function() {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data).to.be.an('array');
+  });
+}
