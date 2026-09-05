@@ -1,5 +1,6 @@
 const app = require('./app');
 const prisma = require('./config/database');
+const { initQdrantCollection } = require('./config/qdrant');
 
 const PORT = process.env.PORT || 5000;
 
@@ -8,6 +9,22 @@ async function startServer() {
     // Attempt database connection check
     await prisma.$connect();
     console.log('Successfully connected to the database.');
+
+    // Ensure Qdrant collection is ready
+    try {
+      await initQdrantCollection();
+    } catch (qdrantErr) {
+      console.warn('Qdrant collection initialization warning:', qdrantErr.message);
+    }
+
+    // Start background AI face embedding worker
+    if (process.env.START_WORKER !== 'false') {
+      try {
+        require('./workers/faceEmbedding.worker');
+      } catch (wErr) {
+        console.warn('[Server] AI Worker startup warning:', wErr.message);
+      }
+    }
 
     app.listen(PORT, () => {
       console.log(`Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);

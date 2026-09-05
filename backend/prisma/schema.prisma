@@ -34,13 +34,43 @@ model Event {
   @@map("events")
 }
 
+enum AiProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  NO_FACE
+  FAILED
+}
+
 model Photo {
-  id                 String   @id @default(uuid())
+  id                 String             @id @default(uuid())
   eventId            String
-  event              Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event              Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
   imageUrl           String
   cloudinaryPublicId String
-  createdAt          DateTime @default(now())
+  aiStatus           AiProcessingStatus @default(PENDING)
+  facesCount         Int                @default(0)
+  aiError            String?
+  processedAt        DateTime?
+  faceEmbeddings     FaceEmbedding[]
+  createdAt          DateTime           @default(now())
 
   @@map("photos")
 }
+
+model FaceEmbedding {
+  id            String   @id @default(uuid())
+  photoId       String
+  photo         Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  qdrantPointId String   @unique
+  faceIndex     Int
+  boxX          Float?
+  boxY          Float?
+  boxWidth      Float?
+  boxHeight     Float?
+  confidence    Float?
+  createdAt     DateTime @default(now())
+
+  @@map("face_embeddings")
+}
+

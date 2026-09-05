@@ -1,5 +1,7 @@
 const prisma = require('../config/database');
 const { uploadFromBuffer, deleteFromCloudinary } = require('../config/cloudinary');
+const { addFaceProcessingJob } = require('../queues/faceProcessing.queue');
+const qdrantService = require('./qdrant.service');
 
 class PhotoService {
   async uploadPhotos({ eventId, files, photographerId }) {
@@ -43,6 +45,18 @@ class PhotoService {
           },
         });
         
+        // Enqueue face processing job asynchronously (does not block upload response)
+        try {
+          await addFaceProcessingJob({
+            photoId: photo.id,
+            eventId,
+            photographerId,
+            imageUrl: photo.imageUrl,
+          });
+        } catch (queueErr) {
+          console.error(`Failed to enqueue face processing job for photo ${photo.id}:`, queueErr.message);
+        }
+
         uploadedPhotos.push(photo);
       } catch (err) {
         console.error('Error uploading file to Cloudinary/DB:', err);
@@ -110,7 +124,14 @@ class PhotoService {
       console.warn(`Cloudinary deletion failed for public ID ${photo.cloudinaryPublicId}:`, err);
     }
 
-    // 4. Delete from DB
+    // 4. Delete face embeddings from Qdrant
+    try {
+      await qdrantService.deletePhotoEmbeddings(photoId);
+    } catch (qdrantErr) {
+      console.warn(`Qdrant deletion failed for photo ID ${photoId}:`, qdrantErr.message);
+    }
+
+    // 5. Delete from DB
     await prisma.photo.delete({
       where: { id: photoId },
     });

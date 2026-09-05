@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import AiBadge from './AiBadge';
 
 export const LightboxModal = ({ photos = [], currentIndex = 0, onClose, onNavigate }) => {
   const currentPhoto = photos[currentIndex];
@@ -38,6 +39,7 @@ export const LightboxModal = ({ photos = [], currentIndex = 0, onClose, onNaviga
               })}
             </span>
           )}
+          <AiBadge photo={currentPhoto} showDetailed={true} />
         </div>
 
         <div className="lightbox-actions">

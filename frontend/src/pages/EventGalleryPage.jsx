@@ -5,6 +5,7 @@ import { photoApi } from '../api/photoApi';
 import LightboxModal from '../components/LightboxModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import PhotoUploader from '../components/PhotoUploader';
+import AiBadge from '../components/AiBadge';
 import {
   ArrowLeft,
   Image as ImageIcon,
@@ -15,7 +16,9 @@ import {
   MapPin,
   AlertCircle,
   CheckCircle,
-  Download
+  Download,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 
 export const EventGalleryPage = () => {
@@ -37,9 +40,48 @@ export const EventGalleryPage = () => {
   const [photoToDelete, setPhotoToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Filter & Refresh states
+  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     loadGallery();
   }, [eventId]);
+
+  // Polling for AI processing updates if any photo is PENDING or PROCESSING
+  useEffect(() => {
+    const hasUnfinished = photos.some(
+      (p) => p.aiStatus === 'PENDING' || p.aiStatus === 'PROCESSING'
+    );
+
+    if (!hasUnfinished) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await photoApi.getEventPhotos(eventId);
+        if (res.success && Array.isArray(res.data)) {
+          setPhotos(res.data);
+        }
+      } catch (pollErr) {
+        console.warn('AI status poll error:', pollErr);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [photos, eventId]);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await photoApi.getEventPhotos(eventId);
+      if (res.success && Array.isArray(res.data)) {
+        setPhotos(res.data);
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
 
   const loadGallery = async () => {
     setIsLoading(true);
@@ -113,15 +155,73 @@ export const EventGalleryPage = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setShowUploader(!showUploader)}
-          >
-            <Upload size={18} />
-            <span>{showUploader ? 'Close Uploader' : 'Upload More Photos'}</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              title="Refresh photo processing statuses"
+            >
+              <RefreshCw size={15} className={isRefreshing ? 'spin' : ''} />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setShowUploader(!showUploader)}
+            >
+              <Upload size={18} />
+              <span>{showUploader ? 'Close Uploader' : 'Upload More Photos'}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Filter Pills */}
+        {photos.length > 0 && (
+          <div className="gallery-filters">
+            <button
+              type="button"
+              className={`filter-pill ${activeFilter === 'ALL' ? 'active' : ''}`}
+              onClick={() => setActiveFilter('ALL')}
+            >
+              <span>All Photos</span>
+              <span className="filter-pill-count">{photos.length}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`filter-pill ${activeFilter === 'WITH_FACES' ? 'active' : ''}`}
+              onClick={() => setActiveFilter('WITH_FACES')}
+            >
+              <Sparkles size={13} />
+              <span>With Faces</span>
+              <span className="filter-pill-count">{withFacesCount}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`filter-pill ${activeFilter === 'NO_FACE' ? 'active' : ''}`}
+              onClick={() => setActiveFilter('NO_FACE')}
+            >
+              <span>No Face</span>
+              <span className="filter-pill-count">{noFaceCount}</span>
+            </button>
+
+            {processingCount > 0 && (
+              <button
+                type="button"
+                className={`filter-pill ${activeFilter === 'PROCESSING' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('PROCESSING')}
+              >
+                <span className="spin">⏳</span>
+                <span>Processing</span>
+                <span className="filter-pill-count">{processingCount}</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {successMsg && (
@@ -149,32 +249,47 @@ export const EventGalleryPage = () => {
       )}
 
       {/* Gallery Grid */}
-      {photos.length === 0 ? (
+      {filteredPhotos.length === 0 ? (
         <div className="empty-state-card mt-8">
           <div className="empty-icon-circle">
             <ImageIcon size={40} className="text-muted" />
           </div>
-          <h3>Your gallery is empty</h3>
+          <h3>{photos.length === 0 ? 'Your gallery is empty' : 'No matching photos'}</h3>
           <p className="empty-desc">
-            No photos have been uploaded for this event yet.
+            {photos.length === 0
+              ? 'No photos have been uploaded for this event yet.'
+              : 'No photos match the selected filter.'}
           </p>
-          <button
-            type="button"
-            className="btn btn-primary mt-4"
-            onClick={() => setShowUploader(true)}
-          >
-            <Upload size={18} />
-            <span>Upload Photos Now</span>
-          </button>
+          {photos.length === 0 ? (
+            <button
+              type="button"
+              className="btn btn-primary mt-4"
+              onClick={() => setShowUploader(true)}
+            >
+              <Upload size={18} />
+              <span>Upload Photos Now</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary mt-4"
+              onClick={() => setActiveFilter('ALL')}
+            >
+              <span>Show All Photos</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="gallery-grid mt-6">
-          {photos.map((photo, index) => (
+          {filteredPhotos.map((photo, index) => (
             <div key={photo.id} className="gallery-card">
               <div
                 className="gallery-image-container"
                 onClick={() => setLightboxIndex(index)}
               >
+                {/* AI Processing Status Badge */}
+                <AiBadge photo={photo} className="ai-status-badge-overlay" />
+
                 <img
                   src={photo.imageUrl}
                   alt={`Gallery photo ${index + 1}`}
@@ -221,6 +336,7 @@ export const EventGalleryPage = () => {
           ))}
         </div>
       )}
+
 
       {/* Lightbox Modal */}
       {lightboxIndex !== null && (

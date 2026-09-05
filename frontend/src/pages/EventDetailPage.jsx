@@ -6,6 +6,7 @@ import PhotoUploader from '../components/PhotoUploader';
 import LightboxModal from '../components/LightboxModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import QrCodeModal from '../components/QrCodeModal';
+import AiBadge from '../components/AiBadge';
 import {
   ArrowLeft,
   Image as ImageIcon,
@@ -51,6 +52,29 @@ export const EventDetailPage = () => {
   useEffect(() => {
     loadEventData();
   }, [eventId]);
+
+  // Polling for AI processing updates if any photo is PENDING or PROCESSING
+  useEffect(() => {
+    const hasUnfinished = photos.some(
+      (p) => p.aiStatus === 'PENDING' || p.aiStatus === 'PROCESSING'
+    );
+
+    if (!hasUnfinished) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await photoApi.getEventPhotos(eventId);
+        if (res.success && Array.isArray(res.data)) {
+          setPhotos(res.data);
+        }
+      } catch (pollErr) {
+        console.warn('AI status poll error in EventDetailPage:', pollErr);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [photos, eventId]);
+
 
   const loadEventData = async () => {
     setIsLoading(true);
@@ -258,69 +282,103 @@ export const EventDetailPage = () => {
       </div>
 
       {/* 3. Processing Progress Card matching reference screenshot */}
-      <div className="processing-progress-card">
-        {/* Left column */}
-        <div className="progress-card-left">
-          <span className="progress-eyebrow">PROCESSING PROGRESS</span>
-          <h2 className="progress-title">Your event is ready to share.</h2>
-          <p className="progress-description">
-            Guests can now use the public event link to find their moments.
-          </p>
-        </div>
+      {(() => {
+        const totalUploaded = photos.length;
+        const processingCount = photos.filter(
+          (p) => p.aiStatus === 'PENDING' || p.aiStatus === 'PROCESSING'
+        ).length;
+        const completedCount = photos.filter(
+          (p) => p.aiStatus === 'COMPLETED' || p.aiStatus === 'NO_FACE'
+        ).length;
+        const failedCount = photos.filter((p) => p.aiStatus === 'FAILED').length;
+        const progressPercent = totalUploaded === 0 ? 0 : Math.round((completedCount / totalUploaded) * 100);
+        const strokeDashoffset = totalUploaded === 0 ? 314.16 : 314.16 - (314.16 * progressPercent) / 100;
 
-        {/* Center column: Circular progress gauge */}
-        <div className="progress-card-center">
-          <div className="circular-progress-wrapper">
-            <svg className="circular-progress-svg" viewBox="0 0 120 120">
-              <circle
-                className="progress-circle-bg"
-                cx="60"
-                cy="60"
-                r="50"
-              />
-              <circle
-                className="progress-circle-fill"
-                cx="60"
-                cy="60"
-                r="50"
-                strokeDasharray="314.16"
-                strokeDashoffset={photos.length > 0 ? "0" : "314.16"}
-              />
-            </svg>
-            <div className="progress-circle-content">
-              <span className="progress-percent">
-                {photos.length > 0 ? '100%' : '0%'}
-              </span>
-              <span className="progress-complete-label">COMPLETE</span>
+        let title = 'Your event is ready to share.';
+        let description = 'Guests can now use the public event link to find their moments.';
+
+        if (processingCount > 0) {
+          title = 'AI is analyzing photographs...';
+          description = `${processingCount} photograph${processingCount > 1 ? 's are' : ' is'} being processed for face detection and vector embeddings.`;
+        } else if (totalUploaded === 0) {
+          title = 'No photographs uploaded yet.';
+          description = 'Upload event photographs to automatically trigger AI face detection and indexing.';
+        } else if (failedCount > 0 && completedCount === 0) {
+          title = 'AI processing encountered issues.';
+          description = 'Some photographs could not be processed by the AI worker.';
+        }
+
+        return (
+          <div className="processing-progress-card">
+            {/* Left column */}
+            <div className="progress-card-left">
+              <span className="progress-eyebrow">PROCESSING PROGRESS</span>
+              <h2 className="progress-title">{title}</h2>
+              <p className="progress-description">{description}</p>
+            </div>
+
+            {/* Center column: Circular progress gauge */}
+            <div className="progress-card-center">
+              <div className="circular-progress-wrapper">
+                <svg className="circular-progress-svg" viewBox="0 0 120 120">
+                  <circle
+                    className="progress-circle-bg"
+                    cx="60"
+                    cy="60"
+                    r="50"
+                  />
+                  <circle
+                    className="progress-circle-fill"
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    strokeDasharray="314.16"
+                    strokeDashoffset={strokeDashoffset}
+                  />
+                </svg>
+                <div className="progress-circle-content">
+                  <span className="progress-percent">
+                    {progressPercent}%
+                  </span>
+                  <span className="progress-complete-label">
+                    {processingCount > 0 ? 'PROCESSING' : 'COMPLETE'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right column: 2x2 statistics with dividers */}
+            <div className="progress-card-right">
+              <div className="stat-quad-grid">
+                <div className="stat-quad-item right-border bottom-border">
+                  <span className="stat-quad-number">{totalUploaded}</span>
+                  <span className="stat-quad-label">UPLOADED</span>
+                </div>
+
+                <div className="stat-quad-item bottom-border">
+                  <span className={`stat-quad-number ${processingCount > 0 ? 'text-amber-500' : ''}`}>
+                    {processingCount}
+                  </span>
+                  <span className="stat-quad-label">PROCESSING</span>
+                </div>
+
+                <div className="stat-quad-item right-border">
+                  <span className="stat-quad-number">{completedCount}</span>
+                  <span className="stat-quad-label">COMPLETED</span>
+                </div>
+
+                <div className="stat-quad-item">
+                  <span className={`stat-quad-number ${failedCount > 0 ? 'text-red-500' : ''}`}>
+                    {failedCount}
+                  </span>
+                  <span className="stat-quad-label">FAILED</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        );
+      })()}
 
-        {/* Right column: 2x2 statistics with dividers */}
-        <div className="progress-card-right">
-          <div className="stat-quad-grid">
-            <div className="stat-quad-item right-border bottom-border">
-              <span className="stat-quad-number">{photos.length}</span>
-              <span className="stat-quad-label">UPLOADED</span>
-            </div>
-
-            <div className="stat-quad-item bottom-border">
-              <span className="stat-quad-number">0</span>
-              <span className="stat-quad-label">PROCESSING</span>
-            </div>
-
-            <div className="stat-quad-item right-border">
-              <span className="stat-quad-number">{photos.length}</span>
-              <span className="stat-quad-label">COMPLETED</span>
-            </div>
-
-            <div className="stat-quad-item">
-              <span className="stat-quad-number">0</span>
-              <span className="stat-quad-label">FAILED</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 4. Upload Area (Collapsible / Triggered by "Add photographs") */}
       <div ref={uploadSectionRef} className="mt-8">
@@ -384,6 +442,9 @@ export const EventDetailPage = () => {
                   className="gallery-image-container"
                   onClick={() => setLightboxIndex(index)}
                 >
+                  {/* AI Status Badge Overlay */}
+                  <AiBadge photo={photo} className="ai-status-badge-overlay" />
+
                   <img
                     src={photo.imageUrl}
                     alt={`Event photograph ${index + 1}`}
