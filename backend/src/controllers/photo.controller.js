@@ -45,6 +45,20 @@ class PhotoController {
       next(error);
     }
   }
+
+  async deletePhotosBatch(req, res, next) {
+    try {
+      const { photoIds } = req.body;
+      const photographerId = req.user.id;
+      const result = await photoService.deletePhotosBatch(photoIds, photographerId);
+      res.status(200).json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new PhotoController();

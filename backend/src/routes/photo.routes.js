@@ -29,6 +29,9 @@ router.post('/events/:eventId/photos', upload.array('photos', 15), photoControll
 // GET /events/:eventId/photos
 router.get('/events/:eventId/photos', photoController.getEventPhotos);
 
+// DELETE /photos/batch - Bulk photo deletion
+router.delete('/photos/batch', photoController.deletePhotosBatch);
+
 // DELETE /photos/:photoId
 router.delete('/photos/:photoId', photoController.deletePhoto);
 
