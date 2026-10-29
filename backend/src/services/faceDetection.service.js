@@ -1,4 +1,4 @@
-﻿const path = require('path');
+const path = require('path');
 const sharp = require('sharp');
 const faceapi = require('@vladmandic/face-api/dist/face-api.node-wasm.js');
 
@@ -50,8 +50,10 @@ class FaceDetectionService {
 
     let tensor = null;
     try {
-      // 1. Decode image to raw RGB bytes using sharp
+      // 1. Normalize orientation (EXIF rotate) and resize for optimal face detection & memory efficiency
       const { data, info } = await sharp(imageBuffer)
+        .rotate() // Auto-orient smartphone camera captures to ensure faces are upright
+        .resize({ width: 1280, height: 1280, fit: 'inside', withoutEnlargement: true })
         .removeAlpha()
         .raw()
         .toBuffer({ resolveWithObject: true });
