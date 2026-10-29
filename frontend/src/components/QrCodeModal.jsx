@@ -3,13 +3,13 @@ import { X, QrCode, Copy, Check, Download, ExternalLink, AlertCircle } from 'luc
 import QRCodeLib from 'qrcode';
 import { eventApi } from '../api/eventApi';
 
-export const QrCodeModal = ({ isOpen, event, onClose }) => {
+export const QrCodeModal = ({ isOpen, event, onClose, onTogglePublic }) => {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
-  const publicUrl = `${window.location.origin}/public/events/${event?.id}`;
+  const publicUrl = `${window.location.origin}/event/${event?.id}`;
 
   useEffect(() => {
     if (!isOpen || !event) return;
@@ -102,9 +102,21 @@ export const QrCodeModal = ({ isOpen, event, onClose }) => {
 
         <div className="modal-body text-center">
           {!event.isPublic && (
-            <div className="alert alert-warning mb-4">
-              <AlertCircle size={18} />
-              <span>Public access is currently disabled for this event. Enable public access so guests can view the gallery.</span>
+            <div className="alert alert-warning mb-4" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertCircle size={18} />
+                <span>Public access is currently disabled for this event.</span>
+              </div>
+              {onTogglePublic && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  onClick={onTogglePublic}
+                  style={{ marginTop: '0.25rem' }}
+                >
+                  Enable Public Access Now
+                </button>
+              )}
             </div>
           )}
 
@@ -117,11 +129,18 @@ export const QrCodeModal = ({ isOpen, event, onClose }) => {
             <div className="alert alert-error">{error}</div>
           ) : (
             <div className="qr-display-container">
-              <div className="qr-image-card">
+              <a
+                href={publicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="qr-image-card"
+                title="Click to open public event page in new tab"
+                style={{ cursor: 'pointer', display: 'inline-block', textDecoration: 'none' }}
+              >
                 <img src={qrDataUrl} alt={`QR Code for ${event.name}`} className="qr-code-img" />
-              </div>
+              </a>
               <p className="qr-hint">
-                Scan with any smartphone camera to open the public gallery.
+                Scan with your phone or <strong>click the QR code</strong> to open the public gallery.
               </p>
             </div>
           )}

@@ -17,6 +17,16 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the PhotoDay Backend API!' });
 });
 
+// Production Health & Diagnostics Endpoint
+app.get(['/health', '/api/health'], (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(process.uptime())}s`,
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
 // Mount all API routes under /api
 app.use('/api', apiRoutes);
 

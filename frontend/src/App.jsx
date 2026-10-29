@@ -12,25 +12,13 @@ import EventsPage from './pages/EventsPage';
 import EventDetailPage from './pages/EventDetailPage';
 import EventGalleryPage from './pages/EventGalleryPage';
 import PublicEventPage from './pages/PublicEventPage';
+import GuestGalleryPage from './pages/GuestGalleryPage';
+import GuestFindPhotosPage from './pages/GuestFindPhotosPage';
+import LandingPage from './pages/LandingPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
-
-// Root redirector based on authentication status
-const RootRedirect = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex-center full-page-loader">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
-  return <Navigate to={isAuthenticated ? '/photographer/dashboard' : '/login'} replace />;
-};
 
 // Layout for photographer portal matching reference design
 const PhotographerLayout = () => {
@@ -52,8 +40,11 @@ export function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Root redirect */}
-          <Route path="/" element={<RootRedirect />} />
+          {/* Public Landing / Starting Page */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Direct Dashboard Convenience Redirect */}
+          <Route path="/dashboard" element={<Navigate to="/photographer/dashboard" replace />} />
 
           {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -68,8 +59,12 @@ export function App() {
             <Route path="events/:eventId/gallery" element={<EventGalleryPage />} />
           </Route>
 
-          {/* Public Guest Gallery Routes (NO photographer authentication needed) */}
+          {/* Public Guest Event Routes (NO photographer authentication needed) */}
+          <Route path="/event/:eventId" element={<PublicEventPage />} />
+          <Route path="/event/:eventId/photos" element={<GuestGalleryPage />} />
+          <Route path="/event/:eventId/my-photos" element={<GuestFindPhotosPage />} />
           <Route path="/public/events/:eventId" element={<PublicEventPage />} />
+          <Route path="/public/events/:eventId/photos" element={<GuestGalleryPage />} />
           <Route path="/public/event/:eventId" element={<PublicEventPage />} />
 
           {/* 404 Fallback */}

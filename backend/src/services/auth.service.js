@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 class AuthService {
   async register({ name, email, password }) {
@@ -12,8 +13,29 @@ class AuthService {
       throw error;
     }
 
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+    if (trimmedName.length < 2) {
+      const error = new Error('Name must be at least 2 characters long.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      const error = new Error('Please enter a valid email address.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (typeof password !== 'string' || password.length < 6) {
+      const error = new Error('Password must be at least 6 characters long.');
+      error.statusCode = 400;
+      throw error;
+    }
+
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: cleanEmail },
     });
 
     if (existingUser) {
@@ -26,8 +48,8 @@ class AuthService {
 
     const user = await prisma.user.create({
       data: {
-        name,
-        email: email.toLowerCase(),
+        name: trimmedName,
+        email: cleanEmail,
         password: hashedPassword,
       },
       select: {
@@ -49,8 +71,16 @@ class AuthService {
       throw error;
     }
 
+    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      const error = new Error('Please enter a valid email address.');
+      error.statusCode = 400;
+      throw error;
+    }
+
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: cleanEmail },
     });
 
     if (!user) {

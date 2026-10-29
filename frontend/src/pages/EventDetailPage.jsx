@@ -487,6 +487,7 @@ export const EventDetailPage = () => {
         isOpen={isQrModalOpen}
         event={event}
         onClose={() => setIsQrModalOpen(false)}
+        onTogglePublic={handleTogglePublic}
       />
 
       {/* Lightbox Modal */}

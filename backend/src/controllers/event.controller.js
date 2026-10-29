@@ -99,6 +99,17 @@ class EventController {
       next(error);
     }
   }
+
+  async matchEventPhotosWithSelfie(req, res, next) {
+    try {
+      const { eventId } = req.params;
+      const selfieBuffer = req.file?.buffer;
+      const result = await eventService.matchEventPhotosWithSelfie(eventId, selfieBuffer);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new EventController();

@@ -1,4 +1,4 @@
-﻿const { v5: uuidv5 } = require('uuid');
+const { v5: uuidv5 } = require('uuid');
 const { qdrantClient, COLLECTION_NAME, initQdrantCollection } = require('../config/qdrant');
 
 // Fixed namespace UUID for generating deterministic UUIDv5 point IDs
@@ -129,6 +129,40 @@ class QdrantService {
     });
 
     return result.count;
+  }
+
+  /**
+   * Searches for matching face vector embeddings restricted strictly to an event.
+   *
+   * @param {number[]} embedding - 128-dimensional query vector from guest selfie
+   * @param {string} eventId - UUID of the event to filter within
+   * @param {Object} options
+   * @param {number} [options.limit=50] - Max results to return
+   * @param {number} [options.scoreThreshold=0.60] - Cosine similarity threshold
+   * @returns {Promise<Array<{ id: string, score: number, payload: Object }>>}
+   */
+  async searchFacesByEmbedding(embedding, eventId, options = {}) {
+    await this.ensureReady();
+
+    const limit = options.limit || 50;
+    const scoreThreshold = options.scoreThreshold !== undefined ? options.scoreThreshold : 0.60;
+
+    const response = await qdrantClient.query(COLLECTION_NAME, {
+      query: embedding,
+      filter: {
+        must: [
+          {
+            key: 'eventId',
+            match: { value: eventId },
+          },
+        ],
+      },
+      limit,
+      score_threshold: scoreThreshold,
+      with_payload: true,
+    });
+
+    return response.points || [];
   }
 }
 

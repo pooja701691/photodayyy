@@ -1,9 +1,18 @@
-import React, { useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, ChevronLeft, ChevronRight, Download, AlertCircle, Sparkles } from 'lucide-react';
 import AiBadge from './AiBadge';
 
 export const LightboxModal = ({ photos = [], currentIndex = 0, onClose, onNavigate }) => {
   const currentPhoto = photos[currentIndex];
+
+  const [imgLoading, setImgLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    setImgLoading(true);
+    setImgError(false);
+  }, [currentIndex, currentPhoto?.imageUrl]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -23,6 +32,32 @@ export const LightboxModal = ({ photos = [], currentIndex = 0, onClose, onNaviga
 
   if (!currentPhoto) return null;
 
+  const handleDownload = async (e) => {
+    e.stopPropagation();
+    if (!currentPhoto?.imageUrl || isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(currentPhoto.imageUrl);
+      if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `photoday_${currentPhoto.id || currentIndex + 1}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2500);
+    } catch (err) {
+      console.warn('Direct blob download failed, falling back to window open:', err);
+      // Fallback
+      window.open(currentPhoto.imageUrl, '_blank');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="lightbox-overlay" onClick={onClose}>
       <div className="lightbox-header" onClick={(e) => e.stopPropagation()}>
@@ -39,20 +74,29 @@ export const LightboxModal = ({ photos = [], currentIndex = 0, onClose, onNaviga
               })}
             </span>
           )}
-          <AiBadge photo={currentPhoto} showDetailed={true} />
+          {currentPhoto.aiStatus && <AiBadge photo={currentPhoto} showDetailed={true} />}
+          {currentPhoto.matchScore && (
+            <span className="lightbox-match-badge" title={`AI Confidence: ${Math.round(currentPhoto.matchScore * 100)}%`}>
+              <Sparkles size={13} className="text-warning inline mr-1" />
+              <span>{Math.round(currentPhoto.matchScore * 100)}% Match</span>
+            </span>
+          )}
         </div>
 
         <div className="lightbox-actions">
-          <a
-            href={currentPhoto.imageUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            download={`photo_${currentPhoto.id}.jpg`}
+          <button
+            type="button"
+            onClick={handleDownload}
             className="lightbox-btn"
-            title="Open/Download original"
+            disabled={isDownloading}
+            title="Download photograph"
           >
-            <Download size={20} />
-          </a>
+            {isDownloading ? (
+              <div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
+            ) : (
+              <Download size={20} />
+            )}
+          </button>
           <button
             type="button"
             onClick={onClose}
@@ -77,11 +121,38 @@ export const LightboxModal = ({ photos = [], currentIndex = 0, onClose, onNaviga
         )}
 
         <div className="lightbox-image-wrapper">
-          <img
-            src={currentPhoto.imageUrl}
-            alt={`Photo ${currentIndex + 1}`}
-            className="lightbox-image"
-          />
+          {imgLoading && !imgError && (
+            <div className="lightbox-image-loader">
+              <div className="spinner"></div>
+              <p className="mt-2 text-white" style={{ fontSize: '0.85rem' }}>Loading full image...</p>
+            </div>
+          )}
+
+          {imgError ? (
+            <div className="lightbox-error-box text-center">
+              <AlertCircle size={40} className="text-danger" />
+              <p className="mt-2 text-white font-medium">Failed to load image.</p>
+              <a
+                href={currentPhoto.imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary btn-sm mt-3"
+              >
+                Open directly
+              </a>
+            </div>
+          ) : (
+            <img
+              src={currentPhoto.imageUrl}
+              alt={`Photo ${currentIndex + 1}`}
+              className={`lightbox-image ${imgLoading ? 'loading-hidden' : ''}`}
+              onLoad={() => setImgLoading(false)}
+              onError={() => {
+                setImgLoading(false);
+                setImgError(true);
+              }}
+            />
+          )}
         </div>
 
         {currentIndex < photos.length - 1 && (

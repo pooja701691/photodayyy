@@ -39,7 +39,8 @@ apiClient.interceptors.response.use(
       const isAuthPath =
         window.location.pathname.startsWith('/login') ||
         window.location.pathname.startsWith('/register') ||
-        window.location.pathname.startsWith('/public');
+        window.location.pathname.startsWith('/public') ||
+        window.location.pathname.startsWith('/event');
 
       if (!isAuthPath && !originalRequest._retry) {
         localStorage.removeItem('photodey_token');
