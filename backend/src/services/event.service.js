@@ -29,15 +29,39 @@ class EventService {
     return event;
   }
 
-  async getMyEvents(photographerId) {
+  async getMyEvents(photographerId, filters = {}) {
+    const { search, isPublic, sortBy = 'createdAt', order = 'desc' } = filters;
+
+    const whereClause = {
+      photographerId,
+    };
+
+    // Filter by public/private status if specified
+    if (isPublic !== undefined && isPublic !== '') {
+      whereClause.isPublic = isPublic === 'true' || isPublic === true;
+    }
+
+    // Search by event name or location
+    if (search && typeof search === 'string' && search.trim()) {
+      whereClause.OR = [
+        { name: { contains: search.trim(), mode: 'insensitive' } },
+        { location: { contains: search.trim(), mode: 'insensitive' } },
+      ];
+    }
+
+    // Safe sorting fields
+    const allowedSortFields = ['createdAt', 'date', 'name'];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const validOrder = String(order).toLowerCase() === 'asc' ? 'asc' : 'desc';
+
     return prisma.event.findMany({
-      where: { photographerId },
+      where: whereClause,
       include: {
         _count: {
           select: { photos: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [validSortBy]: validOrder },
     });
   }
 

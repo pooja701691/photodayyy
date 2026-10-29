@@ -19,9 +19,16 @@ class EventController {
   async getMyEvents(req, res, next) {
     try {
       const photographerId = req.user.id;
-      const events = await eventService.getMyEvents(photographerId);
+      const { search, isPublic, sortBy, order } = req.query;
+      const events = await eventService.getMyEvents(photographerId, {
+        search,
+        isPublic,
+        sortBy,
+        order,
+      });
       res.status(200).json({
         success: true,
+        count: events.length,
         data: events,
       });
     } catch (error) {
