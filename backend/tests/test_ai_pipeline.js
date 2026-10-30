@@ -1,11 +1,11 @@
-﻿const sharp = require('sharp');
-const prisma = require('./src/config/database');
-const { getRedisClient } = require('./src/config/redis');
-const { qdrantClient, COLLECTION_NAME, initQdrantCollection } = require('./src/config/qdrant');
-const { faceProcessingQueue, addFaceProcessingJob } = require('./src/queues/faceProcessing.queue');
-const faceDetectionService = require('./src/services/faceDetection.service');
-const qdrantService = require('./src/services/qdrant.service');
-const { processFaceJob } = require('./src/workers/faceEmbedding.worker');
+const sharp = require('sharp');
+const prisma = require('../src/config/database');
+const { getRedisClient } = require('../src/config/redis');
+const { qdrantClient, COLLECTION_NAME, initQdrantCollection } = require('../src/config/qdrant');
+const { faceProcessingQueue, addFaceProcessingJob } = require('../src/queues/faceProcessing.queue');
+const faceDetectionService = require('../src/services/faceDetection.service');
+const qdrantService = require('../src/services/qdrant.service');
+const { processFaceJob } = require('../src/workers/faceEmbedding.worker');
 
 let testPassed = 0;
 let testFailed = 0;

@@ -127,7 +127,7 @@ async function main() {
   console.log('Starting backend server for verification...');
   
   const env = { ...process.env, PORT: PORT.toString(), NODE_ENV: 'test' };
-  const serverProcess = spawn('node', [path.join(__dirname, 'src/server.js')], {
+  const serverProcess = spawn('node', [path.join(__dirname, '../src/server.js')], {
     env,
     stdio: 'pipe'
   });

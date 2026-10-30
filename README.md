@@ -121,10 +121,13 @@ photoday/
 │   │   ├── queues/                      # BullMQ face processing queue
 │   │   ├── routes/                      # Route definitions (auth, event, photo, public)
 │   │   ├── services/                    # Business logic, Qdrant, Face AI, Cloudinary
-│   │   ├── utils/                       # QR code and helper utilities
 │   │   ├── workers/                     # Background AI face embedding worker
 │   │   ├── app.js                       # Express app configuration
 │   │   └── server.js                    # Server bootstrapping and lifecycle
+│   ├── tests/                           # Integration, AI pipeline & verification tests
+│   │   ├── fixtures/                    # Test mock files
+│   │   ├── test_backend_full.js         # End-to-end backend endpoint test suite
+│   │   └── test_ai_pipeline.js          # Face-API + Redis + Qdrant pipeline test
 │   ├── .env.example                     # Environment template
 │   └── package.json
 ├── frontend/
@@ -137,11 +140,14 @@ photoday/
 │   │   ├── pages/                       # Login, Register, Events, Guest Gallery
 │   │   ├── App.jsx                      # App route switches
 │   │   └── main.jsx
+│   ├── .env.example                     # Frontend environment template
 │   ├── vercel.json                      # Vercel SPA routing configuration
 │   ├── vite.config.js                   # Vite config and proxy setup
 │   └── package.json
 ├── bruno/                               # Complete Bruno API test collection
 ├── docker-compose.yml                   # Local Redis & Qdrant container definitions
+├── package.json                         # Root workspace scripts (dev, build, test, worker)
+├── .gitignore                           # Root source control ignores
 └── README.md
 ```
 

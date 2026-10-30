@@ -2,10 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const prismaSchemaPath = path.join(__dirname, 'prisma/schema.prisma');
-const prismaSchemaBackupPath = path.join(__dirname, 'prisma/schema.prisma.backup');
-const sqliteDbPath = path.join(__dirname, 'prisma/dev.db');
-const sqliteDbJournalPath = path.join(__dirname, 'prisma/dev.db-journal');
+const prismaSchemaPath = path.join(__dirname, '../prisma/schema.prisma');
+const prismaSchemaBackupPath = path.join(__dirname, '../prisma/schema.prisma.backup');
+const sqliteDbPath = path.join(__dirname, '../prisma/dev.db');
+const sqliteDbJournalPath = path.join(__dirname, '../prisma/dev.db-journal');
 
 function runCommand(command) {
   console.log(`Running: ${command}`);
@@ -47,7 +47,8 @@ async function main() {
 
     // 5. Run test verification script
     console.log('Running API integration verification tests...');
-    runCommand('node verification.js');
+    const verificationScriptPath = path.join(__dirname, 'verification.js');
+    runCommand(`node "${verificationScriptPath}"`);
 
     console.log('\n--- Verification Succeeded! ---');
 
